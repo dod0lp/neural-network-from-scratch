@@ -129,6 +129,14 @@ dotnet build NeuralNetwork/NeuralNetwork.slnx
 dotnet run --project NeuralNetwork/NeuralNetwork/NeuralNetwork.csproj
 ```
 
-The current program trains on numbers 0 through 19 and predicts the multiplier
-for unseen number 22. Its result is reproducible because it seeds `Random` with
-`42`; it is a small learning demonstration, not a general production model.
+The current program creates a reproducible random split of every integer from
+0 through 10,000. It shuffles even and odd values separately using seed `123`,
+then takes 4,000 values of each parity for training, 500 of each parity for
+validation, and leaves the remaining 501 evens and 500 odds for testing. Each
+resulting split is shuffled once more before use. This yields an 8,000 / 1,000
+/ 1,001 parity-balanced train/validation/test split with values from across the
+full range in each set.
+
+The number input is divided by 10,000.0 before training and evaluation; parity
+remains `0.0` or `1.0`. The fixed scale is shared by all splits, avoiding a
+separate test-data normalization rule. Network initialization uses seed `42`.

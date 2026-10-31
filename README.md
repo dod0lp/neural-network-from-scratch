@@ -55,7 +55,9 @@ The project now has the foundations for the first complete training milestone:
 - backpropagation through one or more dense layers
 - stochastic-gradient-descent parameter updates and an epoch training loop
 
-The console demonstration trains the network to predict a parity-dependent
-multiplier, then evaluates an unseen number. See the
-[programmer guide](docs/programmer-guide.md) for the architecture and math
-conventions.
+The console demonstration normalizes the number feature and uses a seeded,
+parity-balanced random split of every integer from `0` through `10,000`:
+`8,000` training, `1,000` validation, and `1,001` test samples. It trains the
+network to predict a parity-dependent multiplier and reports loss for every
+split. See the [programmer guide](docs/programmer-guide.md) for the
+architecture and math conventions.
