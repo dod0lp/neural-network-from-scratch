@@ -4,26 +4,6 @@ Implementation of neural network in pure C#.
 Rather than calling some `train()` function, I try to make it from scratch,
 I will experiment with it, etc.
 
-## Current implementation
-
-The project now has the foundations for the forward-pass and error-calculation
-milestones:
-
-- dense layers with seeded random weight initialization and biases;
-- Linear and Tanh activations;
-- dimension-checked matrix/vector operations and network composition;
-- a validated number-and-parity input model;
-- mean squared error (MSE) and its prediction gradient, ready for
-  backpropagation.
-
-It deliberately does **not** train yet: no parameter updates or training loop
-exist. See the [programmer guide](docs/programmer-guide.md) for the architecture,
-math conventions, and the intended next implementation slice.
-
-My initial thoguht is to make simple network for:
-- odd numbers should be multiplied by `2`;
-- even numbers should be divided by `2`.
-
 ## Goal
 
 I want to implement, from my initial understanding of NN:
@@ -62,3 +42,19 @@ More precise plan than written above:
 7. Optionally compare those two approaches.
 
 All this written above is an initial direction.
+
+## Current implementation
+
+The project now has the foundations for the forward-pass and error-calculation
+milestones:
+
+- dense layers with seeded random weight initialization and biases
+- Linear and Tanh activations
+- dimension-checked matrix/vector operations and network composition
+- a validated number-and-parity input model
+- mean squared error (MSE) and its prediction gradient, ready for
+  backpropagation
+
+It deliberately does **not** train yet: no parameter updates or training loop
+exist. See the [programmer guide](docs/programmer-guide.md) for the architecture,
+math conventions, and the intended next implementation slice.

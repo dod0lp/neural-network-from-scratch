@@ -64,6 +64,13 @@ input array. The internal ownership-taking constructor is only for arrays
 created by the implementation and must not be used with an array that will
 continue to be mutated elsewhere.
 
+The vector API also provides `Add`, `Subtract`, `Scale`, `HadamardProduct`,
+`DotProduct`, and `SquaredDistance`, with `+`, `-`, and scalar `*`.
+The elementwise operations produce new vectors and require equal lengths.
+`SquaredDistance` is intentionally allocation-free: it calculates the squared
+error directly instead of first allocating `prediction - expected`. This is
+why MSE uses it in its inner calculation.
+
 ## Loss calculation
 
 `Losses.MeanSquaredError(prediction, expected)` implements:

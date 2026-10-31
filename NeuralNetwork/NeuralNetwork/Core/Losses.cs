@@ -17,16 +17,13 @@ public static class Losses {
     /// It is a suitable first loss for this project's numeric output layer.
     /// </remarks>
     public static double MeanSquaredError(Vector prediction, Vector expected) {
-        ValidateComparableVectors(prediction, expected);
-
-        double total = 0;
-
-        for (var index = 0; index < prediction.Length; index++) {
-            var difference = prediction[index] - expected[index];
-            total += difference * difference;
+        if (prediction.Length == 0) {
+            throw new ArgumentException("Loss cannot be calculated for empty vectors.", nameof(prediction));
         }
 
-        return total / prediction.Length;
+        // SquaredDistance performs the matching-length validation without creating
+        // a temporary vector of differences.
+        return Vector.SquaredDistance(prediction, expected) / prediction.Length;
     }
 
     /// <summary>
