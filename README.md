@@ -45,16 +45,17 @@ All this written above is an initial direction.
 
 ## Current implementation
 
-The project now has the foundations for the forward-pass and error-calculation
-milestones:
+The project now has the foundations for the first complete training milestone:
 
 - dense layers with seeded random weight initialization and biases
 - Linear and Tanh activations
 - dimension-checked matrix/vector operations and network composition
 - a validated number-and-parity input model
-- mean squared error (MSE) and its prediction gradient, ready for
-  backpropagation
+- mean squared error (MSE) and its prediction gradient
+- backpropagation through one or more dense layers
+- stochastic-gradient-descent parameter updates and an epoch training loop
 
-It deliberately does **not** train yet: no parameter updates or training loop
-exist. See the [programmer guide](docs/programmer-guide.md) for the architecture,
-math conventions, and the intended next implementation slice.
+The console demonstration trains the network to predict a parity-dependent
+multiplier, then evaluates an unseen number. See the
+[programmer guide](docs/programmer-guide.md) for the architecture and math
+conventions.

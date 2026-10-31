@@ -66,4 +66,66 @@ public sealed class DenseLayer {
 
         return output;
     }
+
+    /// <summary>
+    /// Propagates an output gradient through this layer and applies one gradient-descent update.
+    /// </summary>
+    /// <param name="input">The exact input supplied to <see cref="Forward(Vector)"/>.</param>
+    /// <param name="output">The corresponding activated output from <see cref="Forward(Vector)"/>.</param>
+    /// <param name="outputGradient">The derivative of loss with respect to each output value.</param>
+    /// <param name="learningRate">Positive multiplier controlling the size of the parameter update.</param>
+    /// <returns>The derivative of loss with respect to each input value.</returns>
+    /// <remarks>
+    /// The returned gradient is calculated before weights are updated, so earlier layers receive
+    /// the gradient for the same parameter state that produced <paramref name="output"/>.
+    /// </remarks>
+    internal Vector Backpropagate(
+        Vector input,
+        Vector output,
+        Vector outputGradient,
+        double learningRate) {
+        if (input.Length != InputCount) {
+            throw new ArgumentException(
+                $"Expected {InputCount} input values, but received {input.Length}.",
+                nameof(input));
+        }
+
+        if (output.Length != OutputCount || outputGradient.Length != OutputCount) {
+            throw new ArgumentException(
+                $"Expected {OutputCount} output and output-gradient values.",
+                nameof(output));
+        }
+
+        var deltas = new double[OutputCount];
+
+        for (var neuron = 0; neuron < OutputCount; neuron++) {
+            deltas[neuron] = outputGradient[neuron] *
+                Activation.DerivativeFromOutput(output[neuron]);
+        }
+
+        var inputGradient = new double[InputCount];
+        // Biases is a Vector struct exposed through a property. Keep a local copy
+        // so its indexer can update the shared backing array.
+        var biases = Biases;
+
+        for (var inputIndex = 0; inputIndex < InputCount; inputIndex++) {
+            double total = 0;
+
+            for (var neuron = 0; neuron < OutputCount; neuron++) {
+                total += Weights[neuron, inputIndex] * deltas[neuron];
+            }
+
+            inputGradient[inputIndex] = total;
+        }
+
+        for (var neuron = 0; neuron < OutputCount; neuron++) {
+            for (var inputIndex = 0; inputIndex < InputCount; inputIndex++) {
+                Weights[neuron, inputIndex] -= learningRate * deltas[neuron] * input[inputIndex];
+            }
+
+            biases[neuron] -= learningRate * deltas[neuron];
+        }
+
+        return new Vector(inputGradient, takeOwnership: true);
+    }
 }

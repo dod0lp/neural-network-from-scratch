@@ -74,4 +74,99 @@ public sealed class FeedForwardNetwork {
 
         return Predict(input.ToVector());
     }
+
+    /// <summary>
+    /// Trains the network on one sample using mean squared error and stochastic gradient descent.
+    /// </summary>
+    /// <param name="sample">Input values and the output the network should produce.</param>
+    /// <param name="learningRate">Positive size of each gradient-descent parameter update.</param>
+    /// <returns>The sample's mean squared error before its parameters are updated.</returns>
+    public double Train(TrainingSample sample, double learningRate) {
+        return Train(sample.Input, sample.ExpectedOutput, learningRate);
+    }
+
+    /// <summary>
+    /// Trains the network on one input/target pair using mean squared error and stochastic gradient descent.
+    /// </summary>
+    /// <param name="input">Values supplied to the first layer.</param>
+    /// <param name="expectedOutput">Target values for the final layer.</param>
+    /// <param name="learningRate">Positive size of each gradient-descent parameter update.</param>
+    /// <returns>The sample's mean squared error before its parameters are updated.</returns>
+    public double Train(Vector input, Vector expectedOutput, double learningRate) {
+        ValidateTrainingArguments(input, expectedOutput, learningRate);
+
+        // Cache each layer's input and activated output for the reverse pass.
+        var layerInputs = new Vector[layers.Length];
+        var layerOutputs = new Vector[layers.Length];
+        var values = input;
+
+        for (var index = 0; index < layers.Length; index++) {
+            layerInputs[index] = values;
+            values = layers[index].Forward(values);
+            layerOutputs[index] = values;
+        }
+
+        var loss = Losses.MeanSquaredError(values, expectedOutput);
+        var gradient = Losses.MeanSquaredErrorGradient(values, expectedOutput);
+
+        for (var index = layers.Length - 1; index >= 0; index--) {
+            gradient = layers[index].Backpropagate(
+                layerInputs[index],
+                layerOutputs[index],
+                gradient,
+                learningRate);
+        }
+
+        return loss;
+    }
+
+    /// <summary>
+    /// Trains once on every supplied sample and returns their mean loss before each update.
+    /// </summary>
+    /// <param name="samples">Non-empty sequence of samples to process in its supplied order.</param>
+    /// <param name="learningRate">Positive size of each gradient-descent parameter update.</param>
+    /// <returns>The average pre-update mean squared error across the epoch.</returns>
+    /// <remarks>
+    /// Each sample updates the network immediately, so this is stochastic gradient descent,
+    /// not batch gradient descent.
+    /// </remarks>
+    public double TrainEpoch(IEnumerable<TrainingSample> samples, double learningRate) {
+        ArgumentNullException.ThrowIfNull(samples);
+
+        double totalLoss = 0;
+        var sampleCount = 0;
+
+        foreach (var sample in samples) {
+            totalLoss += Train(sample, learningRate);
+            sampleCount++;
+        }
+
+        if (sampleCount == 0) {
+            throw new ArgumentException("An epoch requires at least one training sample.", nameof(samples));
+        }
+
+        return totalLoss / sampleCount;
+    }
+
+    /// <summary>Checks that a single training call matches the network's dimensions and rate requirements.</summary>
+    private void ValidateTrainingArguments(Vector input, Vector expectedOutput, double learningRate) {
+        if (input.Length != InputCount) {
+            throw new ArgumentException(
+                $"Expected {InputCount} input values, but received {input.Length}.",
+                nameof(input));
+        }
+
+        if (expectedOutput.Length != OutputCount) {
+            throw new ArgumentException(
+                $"Expected {OutputCount} target values, but received {expectedOutput.Length}.",
+                nameof(expectedOutput));
+        }
+
+        if (!double.IsFinite(learningRate) || learningRate <= 0) {
+            throw new ArgumentOutOfRangeException(
+                nameof(learningRate),
+                learningRate,
+                "Learning rate must be a finite, positive number.");
+        }
+    }
 }

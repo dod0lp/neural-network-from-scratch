@@ -4,8 +4,8 @@
 
 This is a deliberately small neural-network implementation in pure C#. It is
 for learning how the mechanics work, rather than for production-scale machine
-learning. The project currently supports constructing a dense feed-forward
-network and making a prediction. It does not yet train its parameters.
+learning. It supports dense feed-forward prediction, MSE loss, backpropagation,
+and stochastic-gradient-descent training.
 
 The first experiment uses two inputs:
 
@@ -30,6 +30,7 @@ Unless a path is explicitly prefixed, it is relative to
 | `Core/DenseLayer.cs` | Fully connected layer, parameters, initialization, and one layer forward pass. |
 | `Core/FeedForwardNetwork.cs` | Layer composition, dimension validation, and public prediction API. |
 | `Core/Losses.cs` | Mean-squared-error value and its derivative with respect to the prediction. |
+| `Core/TrainingSample.cs` | One input/target pair for supervised learning. |
 | `Math/Vector.cs` | Mutable numeric column-vector type. |
 | `Math/Matrix.cs` | Matrix storage and matrix-by-vector multiplication. |
 
@@ -87,30 +88,37 @@ prediction:
 2 * (prediction[i] - expected[i]) / outputCount
 ```
 
-It measures error only. It does not yet propagate that error through a layer
-or mutate parameters.
+The returned gradient starts backpropagation; it is not itself a parameter
+gradient.
 
-## Next implementation slice: one trainable layer
+## Training and backpropagation
 
-The next focused change should make a single `DenseLayer` trainable before
-generalizing backpropagation across multiple layers:
-
-1. Retain the layer input and pre-activation/output values for a training pass.
-2. Combine the loss gradient with the activation derivative to obtain the
-   layer's output delta.
-3. Compute `weightGradient[row, column] = delta[row] * input[column]` and
-   `biasGradient[row] = delta[row]`.
-4. Subtract `learningRate * gradient` from each weight and bias.
-5. Add deterministic tests showing that loss decreases for a tiny sample.
-
-Once that works, multi-layer backpropagation needs the previous layer's delta:
+`FeedForwardNetwork.Train` caches each layer's input and activated output during
+the forward pass. Starting with the MSE gradient at the final output, it then
+visits layers in reverse order. `DenseLayer.Backpropagate` computes:
 
 ```text
-previousDelta = (W-transpose * currentDelta) elementwise-multiplied by activationDerivative
+delta = lossGradient elementwise-multiplied by activationDerivative(output)
+weightGradient[row, column] = delta[row] * input[column]
+biasGradient[row] = delta[row]
+inputGradient = W-transpose * delta
 ```
 
-Keep the weight orientation described above; it makes the forward pass and
-this transpose relationship unambiguous.
+The layer calculates `inputGradient` before modifying its weights. This matters:
+the preceding layer must receive a gradient computed from the same weights that
+produced the cached forward-pass output. It then performs the update:
+
+```text
+parameter = parameter - learningRate * parameterGradient
+```
+
+`TrainEpoch` visits samples in the supplied order, updating parameters after
+each one. This is stochastic gradient descent rather than a batch update. It
+returns the average loss measured immediately before each sample's update.
+
+The next useful improvement is deterministic automated tests for a known
+forward pass, vector operations, loss gradients, and a training run whose loss
+falls over time. After that, add normalized inputs and mini-batch training.
 
 ## Build and run
 
@@ -121,6 +129,6 @@ dotnet build NeuralNetwork/NeuralNetwork.slnx
 dotnet run --project NeuralNetwork/NeuralNetwork/NeuralNetwork.csproj
 ```
 
-The current program intentionally prints an untrained prediction. Its numeric
-result is reproducible because it seeds `Random` with `42`, but it has no
-learning significance until training is added.
+The current program trains on numbers 0 through 19 and predicts the multiplier
+for unseen number 22. Its result is reproducible because it seeds `Random` with
+`42`; it is a small learning demonstration, not a general production model.
